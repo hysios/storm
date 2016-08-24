@@ -14,6 +14,7 @@ const (
 	tagUniqueIdx = "unique"
 	tagInline    = "inline"
 	indexPrefix  = "__storm_index_"
+	indexKindKey = "__storm_kind_"
 )
 
 type indexInfo struct {
@@ -175,7 +176,29 @@ func (i *identInfo) IsOfIntegerFamily() bool {
 	return i.Value != nil && kind >= reflect.Int && kind <= reflect.Uint64
 }
 
-func getIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {
+func getIndex(bucket *bolt.Bucket, fieldName string) (index.Index, error) {
+	var idx index.Index
+	var err error
+
+	b := bucket.Bucket([]byte(indexPrefix + fieldName))
+	if b == nil {
+		return nil, ErrNotFound
+	}
+
+	kind := b.Get([]byte(indexKindKey))
+	switch string(kind) {
+	case tagUniqueIdx:
+		idx, err = index.NewUniqueIndex(bucket, []byte(indexPrefix+fieldName))
+	case tagIdx:
+		idx, err = index.NewListIndex(bucket, []byte(indexPrefix+fieldName))
+	default:
+		err = ErrIdxNotFound
+	}
+
+	return idx, err
+}
+
+func getOrCreateIndex(bucket *bolt.Bucket, idxKind string, fieldName string) (index.Index, error) {
 	var idx index.Index
 	var err error
 

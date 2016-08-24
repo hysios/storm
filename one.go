@@ -57,15 +57,15 @@ func (n *node) One(fieldName string, value interface{}, to interface{}) error {
 	}
 
 	if n.tx != nil {
-		return n.one(n.tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
+		return n.one(n.tx, bucketName, fieldName, to, val, fieldName == "ID" || tag == "id")
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.one(tx, bucketName, fieldName, tag, to, val, fieldName == "ID" || tag == "id")
+		return n.one(tx, bucketName, fieldName, to, val, fieldName == "ID" || tag == "id")
 	})
 }
 
-func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{}, val []byte, skipIndex bool) error {
+func (n *node) one(tx *bolt.Tx, bucketName, fieldName string, to interface{}, val []byte, skipIndex bool) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
@@ -73,7 +73,7 @@ func (n *node) one(tx *bolt.Tx, bucketName, fieldName, tag string, to interface{
 
 	var id []byte
 	if !skipIndex {
-		idx, err := getIndex(bucket, tag, fieldName)
+		idx, err := getIndex(bucket, fieldName)
 		if err != nil {
 			if err == index.ErrNotFound {
 				return ErrNotFound

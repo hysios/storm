@@ -1,5 +1,10 @@
 package index
 
+const (
+	indexPrefix  = "__storm_index_"
+	indexKindKey = "__storm_kind_"
+)
+
 // Index interface
 type Index interface {
 	Add(value []byte, targetID []byte) error

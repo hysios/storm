@@ -57,12 +57,7 @@ func (n *node) allByIndex(tx *bolt.Tx, fieldName string, info *modelInfo, ref *r
 		return ErrNotFound
 	}
 
-	idxInfo, ok := info.Indexes[fieldName]
-	if !ok {
-		return ErrNotFound
-	}
-
-	idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	idx, err := getIndex(bucket, fieldName)
 	if err != nil {
 		return err
 	}

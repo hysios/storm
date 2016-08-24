@@ -18,6 +18,10 @@ func NewListIndex(parent *bolt.Bucket, indexName []byte) (*ListIndex, error) {
 		if err != nil {
 			return nil, err
 		}
+		err = b.Put([]byte(indexKindKey), []byte("index"))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ids, err := NewUniqueIndex(b, []byte("storm__ids"))
@@ -93,7 +97,7 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) || bytes.Equal(bucketName, []byte(indexKindKey)) {
 			continue
 		}
 
@@ -110,6 +114,9 @@ func (idx *ListIndex) RemoveID(targetID []byte) error {
 		cd := uni.IndexBucket.Cursor()
 		empty := true
 		for k, _ := cd.First(); k != nil; k, _ = cd.Next() {
+			if bytes.Equal(k, []byte(indexKindKey)) {
+				continue
+			}
 			empty = false
 			break
 		}
@@ -150,7 +157,7 @@ func (idx *ListIndex) AllRecords(opts *Options) ([][]byte, error) {
 	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) || bytes.Equal(bucketName, []byte(indexKindKey)) {
 			continue
 		}
 
@@ -176,7 +183,7 @@ func (idx *ListIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, er
 	c := idx.IndexBucket.Cursor()
 
 	for bucketName, val := c.Seek(min); bucketName != nil && bytes.Compare(bucketName, max) <= 0; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) || bytes.Equal(bucketName, []byte(indexKindKey)) {
 			continue
 		}
 

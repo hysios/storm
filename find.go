@@ -60,21 +60,21 @@ func (n *node) Find(fieldName string, value interface{}, to interface{}, options
 	}
 
 	if n.tx != nil {
-		return n.find(n.tx, bucketName, fieldName, tag, sink, val, opts)
+		return n.find(n.tx, bucketName, fieldName, sink, val, opts)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.find(tx, bucketName, fieldName, tag, sink, val, opts)
+		return n.find(tx, bucketName, fieldName, sink, val, opts)
 	})
 }
 
-func (n *node) find(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, val []byte, opts *index.Options) error {
+func (n *node) find(tx *bolt.Tx, bucketName, fieldName string, sink *listSink, val []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		return ErrNotFound
 	}
 
-	idx, err := getIndex(bucket, tag, fieldName)
+	idx, err := getIndex(bucket, fieldName)
 	if err != nil {
 		return err
 	}

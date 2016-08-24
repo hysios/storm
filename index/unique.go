@@ -18,6 +18,10 @@ func NewUniqueIndex(parent *bolt.Bucket, indexName []byte) (*UniqueIndex, error)
 		if err != nil {
 			return nil, err
 		}
+		err = b.Put([]byte(indexKindKey), []byte("unique"))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &UniqueIndex{
@@ -91,6 +95,10 @@ func (idx *UniqueIndex) AllRecords(opts *Options) ([][]byte, error) {
 	c := idx.IndexBucket.Cursor()
 
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		if bytes.Equal(val, []byte(indexKindKey)) {
+			continue
+		}
+
 		if opts != nil && opts.Skip > 0 {
 			opts.Skip--
 			continue
@@ -116,6 +124,10 @@ func (idx *UniqueIndex) Range(min []byte, max []byte, opts *Options) ([][]byte, 
 	c := idx.IndexBucket.Cursor()
 
 	for val, ident := c.Seek(min); val != nil && bytes.Compare(val, max) <= 0; val, ident = c.Next() {
+		if bytes.Equal(val, []byte(indexKindKey)) {
+			continue
+		}
+
 		if opts != nil && opts.Skip > 0 {
 			opts.Skip--
 			continue
@@ -139,6 +151,9 @@ func (idx *UniqueIndex) first() []byte {
 	c := idx.IndexBucket.Cursor()
 
 	for val, ident := c.First(); val != nil; val, ident = c.Next() {
+		if bytes.Equal(val, []byte(indexKindKey)) {
+			continue
+		}
 		return ident
 	}
 	return nil

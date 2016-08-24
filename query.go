@@ -388,8 +388,8 @@ func (d *deleteSink) add(bucket *bolt.Bucket, k []byte, v []byte, elem reflect.V
 		return false, err
 	}
 
-	for fieldName, idxInfo := range info.Indexes {
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+	for fieldName := range info.Indexes {
+		idx, err := getIndex(bucket, fieldName)
 		if err != nil {
 			return false, err
 		}

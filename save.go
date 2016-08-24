@@ -78,7 +78,7 @@ func (n *node) save(tx *bolt.Tx, info *modelInfo, id []byte, raw []byte, data in
 	}
 
 	for fieldName, idxInfo := range info.Indexes {
-		idx, err := getIndex(bucket, idxInfo.Type, fieldName)
+		idx, err := getOrCreateIndex(bucket, idxInfo.Type, fieldName)
 		if err != nil {
 			return err
 		}

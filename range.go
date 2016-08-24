@@ -65,22 +65,22 @@ func (n *node) Range(fieldName string, min, max, to interface{}, options ...func
 	}
 
 	if n.tx != nil {
-		return n.rnge(n.tx, bucketName, fieldName, tag, sink, mn, mx, opts)
+		return n.rnge(n.tx, bucketName, fieldName, sink, mn, mx, opts)
 	}
 
 	return n.s.Bolt.View(func(tx *bolt.Tx) error {
-		return n.rnge(tx, bucketName, fieldName, tag, sink, mn, mx, opts)
+		return n.rnge(tx, bucketName, fieldName, sink, mn, mx, opts)
 	})
 }
 
-func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName, tag string, sink *listSink, min, max []byte, opts *index.Options) error {
+func (n *node) rnge(tx *bolt.Tx, bucketName, fieldName string, sink *listSink, min, max []byte, opts *index.Options) error {
 	bucket := n.GetBucket(tx, bucketName)
 	if bucket == nil {
 		reflect.Indirect(sink.ref).SetLen(0)
 		return nil
 	}
 
-	idx, err := getIndex(bucket, tag, fieldName)
+	idx, err := getIndex(bucket, fieldName)
 	if err != nil {
 		return err
 	}

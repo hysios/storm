@@ -104,8 +104,11 @@ func TestListIndex(t *testing.T) {
 		assert.NoError(t, err)
 
 		err = idx.Add([]byte("hey"), []byte("id1"))
+		assert.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id2"))
+		assert.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id3"))
+		assert.NoError(t, err)
 		err = idx.Add([]byte("hey"), []byte("id4"))
 		ids, err = idx.All([]byte("hey"), nil)
 		assert.Len(t, ids, 4)
@@ -175,7 +178,7 @@ func countBuckets(t *testing.T, bucket *bolt.Bucket) int {
 	c := bucket.Cursor()
 	count := 0
 	for bucketName, val := c.First(); bucketName != nil; bucketName, val = c.Next() {
-		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) {
+		if val != nil || bytes.Equal(bucketName, []byte("storm__ids")) || bytes.Equal(bucketName, []byte("__storm_kind_")) {
 			continue
 		}
 		count++
