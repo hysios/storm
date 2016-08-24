@@ -1,6 +1,7 @@
 package storm
 
 import (
+	"fmt"
 	"net/mail"
 	"testing"
 	"time"
@@ -118,4 +119,111 @@ func TestDelete(t *testing.T) {
 	assert.Equal(t, ErrNotFound, err)
 	err = db.Delete("", nil)
 	assert.Equal(t, ErrNotFound, err)
+}
+
+func TestGetAll(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	var ids [][]byte
+	for i := 0; i < 10; i++ {
+		key := fmt.Sprintf("k%d", i)
+		ids = append(ids, []byte(key))
+		err := db.Set("bucket", key, i)
+		assert.NoError(t, err)
+	}
+
+	results := make([]int, 10)
+	err := db.GetAll("bucket", ids, func(idx int) interface{} {
+		return &results[idx]
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 0, results[0])
+	assert.Equal(t, 9, results[9])
+}
+
+func TestGetAllWithIndex(t *testing.T) {
+	db, cleanup := createDB(t)
+	defer cleanup()
+
+	for i := 0; i < 10; i++ {
+		w := User{Name: "John", ID: i + 1, Slug: fmt.Sprintf("John%d", i+1)}
+		err := db.Save(&w)
+		assert.NoError(t, err)
+	}
+
+	ids, err := db.Index("User", "Name", "John")
+	results := make([]User, 10)
+	err = db.GetAll("User", ids, func(idx int) interface{} {
+		r := &results[idx]
+		return r
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, results[0].ID)
+	assert.Equal(t, 10, results[9].ID)
+}
+
+func BenchmarkGetAll100(b *testing.B) {
+	db, cleanup := createDB(b)
+	defer cleanup()
+
+	var ids [][]byte
+	for i := 0; i < 100; i++ {
+		key := fmt.Sprintf("k%d", i)
+		ids = append(ids, []byte(key))
+		err := db.Set("bucket", key, i)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	results := make([]int, 100)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		err := db.GetAll("bucket", ids, func(idx int) interface{} {
+			return &results[idx]
+		})
+		if err != nil {
+			b.Error(err)
+		}
+	}
+}
+
+func BenchmarkGetAll100WithIndex(b *testing.B) {
+	db, cleanup := createDB(b)
+	defer cleanup()
+
+	for i := 0; i < 200; i++ {
+		var w User
+
+		if i%2 == 0 {
+			w.Name = "John"
+		} else {
+			w.Name = "Jack"
+		}
+
+		w.ID = i + 1
+		err := db.Save(&w)
+		if err != nil {
+			b.Error(err)
+		}
+	}
+
+	users := make([]User, 100)
+
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		ids, err := db.Index("User", "Name", "John")
+		if err != nil {
+			b.Error(err)
+		}
+
+		err = db.GetAll("User", ids, func(idx int) interface{} {
+			return &users[idx]
+		})
+		if err != nil {
+			b.Error(err)
+		}
+	}
 }

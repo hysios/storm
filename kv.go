@@ -103,6 +103,38 @@ func (n *node) delete(tx *bolt.Tx, bucketName string, id []byte) error {
 	return bucket.Delete(id)
 }
 
+// GetAll values from a list of ids
+func (n *node) GetAll(bucketName string, ids [][]byte, fn func(idx int) interface{}) error {
+	if n.tx != nil {
+		return n.getAll(n.tx, bucketName, ids, fn)
+	}
+
+	return n.s.Bolt.View(func(tx *bolt.Tx) error {
+		return n.getAll(tx, bucketName, ids, fn)
+	})
+}
+
+func (n *node) getAll(tx *bolt.Tx, bucketName string, ids [][]byte, fn func(idx int) interface{}) error {
+	bucket := n.GetBucket(tx, bucketName)
+	if bucket == nil {
+		return ErrNotFound
+	}
+
+	for i, id := range ids {
+		raw := bucket.Get(id)
+		if raw == nil {
+			return ErrNotFound
+		}
+
+		err := n.s.Codec.Decode(raw, fn(i))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Get a value from a bucket
 func (s *DB) Get(bucketName string, key interface{}, to interface{}) error {
 	return s.root.Get(bucketName, key, to)
@@ -116,4 +148,9 @@ func (s *DB) Set(bucketName string, key interface{}, value interface{}) error {
 // Delete deletes a key from a bucket
 func (s *DB) Delete(bucketName string, key interface{}) error {
 	return s.root.Delete(bucketName, key)
+}
+
+// GetAll values from a list of ids
+func (s *DB) GetAll(bucketName string, ids [][]byte, fn func(idx int) interface{}) error {
+	return s.root.GetAll(bucketName, ids, fn)
 }

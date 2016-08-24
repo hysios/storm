@@ -89,21 +89,21 @@ func TestFind(t *testing.T) {
 	assert.Equal(t, 30, users[9].ID)
 }
 
-func BenchmarkFindWithIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func BenchmarkFind100WithIndex(b *testing.B) {
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var users []User
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 200; i++ {
 		var w User
 
 		if i%2 == 0 {
 			w.Name = "John"
-			w.Group = "Staff"
 		} else {
 			w.Name = "Jack"
-			w.Group = "Admin"
 		}
+
+		w.ID = i + 1
 		err := db.Save(&w)
 		if err != nil {
 			b.Error(err)
@@ -119,21 +119,20 @@ func BenchmarkFindWithIndex(b *testing.B) {
 	}
 }
 
-func BenchmarkFindWithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func BenchmarkFind100WithoutIndex(b *testing.B) {
+	db, cleanup := createDB(b)
 	defer cleanup()
 
 	var users []User
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 200; i++ {
 		var w User
 
 		if i%2 == 0 {
-			w.Name = "John"
 			w.Group = "Staff"
 		} else {
-			w.Name = "Jack"
 			w.Group = "Admin"
 		}
+		w.ID = i + 1
 		err := db.Save(&w)
 		if err != nil {
 			b.Error(err)

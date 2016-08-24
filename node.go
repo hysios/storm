@@ -23,6 +23,7 @@ type Node interface {
 	PrefixScan(prefix string) []Node
 	Select(matchers ...q.Matcher) Query
 	Get(bucketName string, key interface{}, to interface{}) error
+	GetAll(bucketName string, ids [][]byte, fn func(int) interface{}) error
 	Set(bucketName string, key interface{}, value interface{}) error
 	Delete(bucketName string, key interface{}) error
 	From(addend ...string) Node
