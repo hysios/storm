@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -89,8 +92,8 @@ func TestFind(t *testing.T) {
 	assert.Equal(t, 30, users[9].ID)
 }
 
-func BenchmarkFind100WithIndex(b *testing.B) {
-	db, cleanup := createDB(b)
+func benchmarkFind100WithIndex(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	var users []User
@@ -119,8 +122,8 @@ func BenchmarkFind100WithIndex(b *testing.B) {
 	}
 }
 
-func BenchmarkFind100WithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b)
+func benchmarkFind100WithoutIndex(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	var users []User
@@ -146,4 +149,20 @@ func BenchmarkFind100WithoutIndex(b *testing.B) {
 			b.Error(err)
 		}
 	}
+}
+
+func BenchmarkFind100WithIndexJSON(b *testing.B) {
+	benchmarkFind100WithIndex(b, json.Codec)
+}
+
+func BenchmarkFind100WithIndexGOB(b *testing.B) {
+	benchmarkFind100WithIndex(b, gob.Codec)
+}
+
+func BenchmarkFind100WithoutIndexJSON(b *testing.B) {
+	benchmarkFind100WithoutIndex(b, json.Codec)
+}
+
+func BenchmarkFind100WithoutIndexGOB(b *testing.B) {
+	benchmarkFind100WithoutIndex(b, gob.Codec)
 }

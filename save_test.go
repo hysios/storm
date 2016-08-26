@@ -4,7 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec"
 	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
@@ -298,8 +300,8 @@ func TestSaveByValue(t *testing.T) {
 	assert.Equal(t, ErrStructPtrNeeded, err)
 }
 
-func BenchmarkSave(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func benchmarkSave(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, AutoIncrement(), Codec(codec))
 	defer cleanup()
 
 	w := User{Name: "John"}
@@ -310,4 +312,12 @@ func BenchmarkSave(b *testing.B) {
 			b.Error(err)
 		}
 	}
+}
+
+func BenchmarkSaveJSON(b *testing.B) {
+	benchmarkSave(b, json.Codec)
+}
+
+func BenchmarkSaveGOB(b *testing.B) {
+	benchmarkSave(b, gob.Codec)
 }

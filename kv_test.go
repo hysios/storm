@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/asdine/storm/codec"
 	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
@@ -163,8 +165,8 @@ func TestGetAllWithIndex(t *testing.T) {
 	assert.Equal(t, 10, results[9].ID)
 }
 
-func BenchmarkGetAll100(b *testing.B) {
-	db, cleanup := createDB(b)
+func benchmarkGetAll100(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	var ids [][]byte
@@ -190,8 +192,8 @@ func BenchmarkGetAll100(b *testing.B) {
 	}
 }
 
-func BenchmarkGetAll100WithIndex(b *testing.B) {
-	db, cleanup := createDB(b)
+func benchmarkGetAll100WithIndex(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	for i := 0; i < 200; i++ {
@@ -226,4 +228,20 @@ func BenchmarkGetAll100WithIndex(b *testing.B) {
 			b.Error(err)
 		}
 	}
+}
+
+func BenchmarkGetAll100JSON(b *testing.B) {
+	benchmarkGetAll100(b, json.Codec)
+}
+
+func BenchmarkGetAll100GOB(b *testing.B) {
+	benchmarkGetAll100(b, gob.Codec)
+}
+
+func BenchmarkGetAll100WithIndexJSON(b *testing.B) {
+	benchmarkGetAll100WithIndex(b, json.Codec)
+}
+
+func BenchmarkGetAll100WithIndexGOB(b *testing.B) {
+	benchmarkGetAll100WithIndex(b, gob.Codec)
 }

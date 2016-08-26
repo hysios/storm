@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/asdine/storm/codec"
+	"github.com/asdine/storm/codec/gob"
+	"github.com/asdine/storm/codec/json"
 	"github.com/boltdb/bolt"
 	"github.com/stretchr/testify/assert"
 )
@@ -114,13 +117,13 @@ func TestOneNotWritable(t *testing.T) {
 	assert.Equal(t, "John", u.Name)
 }
 
-func BenchmarkOneWithIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func benchmarkOneWithIndex(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	var u User
 	for i := 0; i < 100; i++ {
-		w := User{Name: fmt.Sprintf("John%d", i), Group: fmt.Sprintf("Staff%d", i)}
+		w := User{ID: i + 1, Name: fmt.Sprintf("John%d", i), Group: fmt.Sprintf("Staff%d", i)}
 		err := db.Save(&w)
 		if err != nil {
 			b.Error(err)
@@ -136,13 +139,13 @@ func BenchmarkOneWithIndex(b *testing.B) {
 	}
 }
 
-func BenchmarkOneWithoutIndex(b *testing.B) {
-	db, cleanup := createDB(b, AutoIncrement())
+func benchmarkOneWithoutIndex(b *testing.B, codec codec.EncodeDecoder) {
+	db, cleanup := createDB(b, Codec(codec))
 	defer cleanup()
 
 	var u User
 	for i := 0; i < 100; i++ {
-		w := User{Name: "John", Group: fmt.Sprintf("Staff%d", i)}
+		w := User{ID: i + 1, Name: "John", Group: fmt.Sprintf("Staff%d", i)}
 		err := db.Save(&w)
 		if err != nil {
 			b.Error(err)
@@ -156,4 +159,20 @@ func BenchmarkOneWithoutIndex(b *testing.B) {
 			b.Error(err)
 		}
 	}
+}
+
+func BenchmarkOneWithIndexJSON(b *testing.B) {
+	benchmarkOneWithIndex(b, json.Codec)
+}
+
+func BenchmarkOneWithIndexGOB(b *testing.B) {
+	benchmarkOneWithIndex(b, gob.Codec)
+}
+
+func BenchmarkOneWithoutIndexJSON(b *testing.B) {
+	benchmarkOneWithoutIndex(b, json.Codec)
+}
+
+func BenchmarkOneWithoutIndexGOB(b *testing.B) {
+	benchmarkOneWithoutIndex(b, gob.Codec)
 }
